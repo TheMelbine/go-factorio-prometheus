@@ -49,7 +49,7 @@ func init() {
 	pf.String("rcon-password", "", "The password to connect to the Factorio RCON server")
 	pf.String("rcon-host", "localhost", "The host to connect to the Factorio RCON server")
 	pf.String("otel-collector", "localhost:4317", "The host and port of the OpenTelemetry collector")
-	// pf.String("otel-service-name", "factorio-otel", "The service name to use for OpenTelemetry")
+	pf.String("otel-service-name", "factorio-otel", "The service name to use for OpenTelemetry")
 }
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
@@ -77,7 +77,7 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set up OpenTelemetry.
-	otelShutdown, err := setup.OTelSDK(cmd.Context(), otelCollector)
+	otelShutdown, err := setup.OTelSDK(cmd.Context(), otelCollector, otelServiceName)
 	if err != nil {
 		return err
 	}
