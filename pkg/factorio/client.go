@@ -24,7 +24,7 @@ func NewRCONClient(address, password string) (*RCONClient, error) {
 }
 
 func (c *RCONClient) Send(cmd string) (string, error) {
-	logger := c.logger.With("reqid", uuid.New().String())
+	logger := c.logger.With("reqid", uuid.NewString())
 	logger.Debug("Sending command", "command", cmd)
 
 	resp, err := c.conn.Execute(cmd)
