@@ -1,31 +1,55 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-factorio-otel/internal/setup"
 	"github.com/daanv2/go-factorio-otel/pkg/factorio"
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:  "server",
 	RunE: serverWorkload,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		if cmd.Flag("rcon-port").Value.String() == "" {
+			err = errors.Join(err, errors.New("rcon-password is required"))
+		}
+		if cmd.Flag("rcon-password").Value.String() == "" {
+			err = errors.Join(err, errors.New("rcon-password is required"))
+		}
+		if cmd.Flag("rcon-host").Value.String() == "" {
+			err = errors.Join(err, errors.New("rcon-host is required"))
+		}
+		if cmd.Flag("otel-collector").Value.String() == "" {
+			err = errors.Join(err, errors.New("otel-collector is required"))
+		}
+		if cmd.Flag("otel-service-name").Value.String() == "" {
+			err = errors.Join(err, errors.New("otel-service-name is required"))
+		}
+
+		return err
+	},
 }
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// serverCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	pf := serverCmd.PersistentFlags()
+	pf.String("rcon-port", "25575", "The port to connect to the Factorio RCON server")
+	pf.String("rcon-password", "", "The password to connect to the Factorio RCON server")
+	pf.String("rcon-host", "localhost", "The host to connect to the Factorio RCON server")
+	pf.String("otel-collector", "localhost:4317", "The host and port of the OpenTelemetry collector")
+	// pf.String("otel-service-name", "factorio-otel", "The service name to use for OpenTelemetry")
 }
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
@@ -33,17 +57,17 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 		rconPort     = cmd.Flag("rcon-port").Value.String()
 		rconPassword = cmd.Flag("rcon-password").Value.String()
 		rconHost     = cmd.Flag("rcon-host").Value.String()
+		otelCollector = cmd.Flag("otel-collector").Value.String()
+		otelServiceName = cmd.Flag("otel-service-name").Value.String()
 		logger       = log.WithPrefix("server")
 	)
-	if rconPassword == "" {
-		return fmt.Errorf("rcon-password is required")
+	if rconPort == "" || rconPassword == "" || rconHost == "" {
+		return errors.New("rcon-port, rcon-password, and rcon-host are required")
 	}
-	if rconPort == "" {
-		return fmt.Errorf("rcon-port is required")
+	if otelCollector == "" || otelServiceName == "" {
+		return errors.New("otel-collector and otel-service-name are required")
 	}
-	if rconHost == "" {
-		return fmt.Errorf("rcon-host is required")
-	}
+
 
 	address := fmt.Sprintf("%s:%s", rconHost, rconPort)
 	logger.Info("Connecting to Factorio RCON server", "address", address)
@@ -51,10 +75,38 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to Factorio RCON server: %w", err)
 	}
+
+	// Set up OpenTelemetry.
+	otelShutdown, err := setup.OTelSDK(cmd.Context(), otelCollector)
+	if err != nil {
+		return err
+	}
+	var errs error
+	// Handle shutdown properly so nothing leaks.
+	defer func() {
+		errs = errors.Join(errs, otelShutdown(context.Background()))
+	}()
+
+	// Start HTTP server.
+	srv := &http.Server{
+		Addr:         ":8080",
+		BaseContext:  func(_ net.Listener) context.Context { return cmd.Context() },
+		ReadTimeout:  time.Second,
+		WriteTimeout: 10 * time.Second,
+		Handler:      newHTTPHandler(),
+	}
+	go func() {
+		err := srv.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			errs = errors.Join(errs, err)
+		}
+	}()
+
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			logger.Error("Failed to close connection", "error", err)
+			errs = errors.Join(errs, err)
 		}
 	}()
 
@@ -70,5 +122,13 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	<-cmd.Context().Done()
 	logger.Info("Shutting down")
 
-	return nil
+	return errs
+}
+
+
+func newHTTPHandler() http.Handler {
+	// Add HTTP instrumentation for the whole server.
+	mux := http.NewServeMux()
+	handler := otelhttp.NewHandler(mux, "/")
+	return handler
 }
