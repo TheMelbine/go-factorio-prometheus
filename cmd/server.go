@@ -10,7 +10,7 @@ import (
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
-	Use:   "server",
+	Use:  "server",
 	RunE: serverWorkload,
 }
 
@@ -30,10 +30,10 @@ func init() {
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
 	var (
-		rconPort = cmd.Flag("rcon-port").Value.String()
+		rconPort     = cmd.Flag("rcon-port").Value.String()
 		rconPassword = cmd.Flag("rcon-password").Value.String()
-		rconHost = cmd.Flag("rcon-host").Value.String()
-		logger = log.WithPrefix("server")
+		rconHost     = cmd.Flag("rcon-host").Value.String()
+		logger       = log.WithPrefix("server")
 	)
 	if rconPassword == "" {
 		return fmt.Errorf("rcon-password is required")
@@ -60,14 +60,14 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 
 	// test
 	go func() {
-		rep, err := conn.Send("/players")
+		rep, err := conn.Send("/c game.forces[0]")
 		if err != nil {
 			logger.Error("Failed to send command", "error", err)
 		}
 		logger.Info("Received response", "response", rep)
 	}()
 
-	<- cmd.Context().Done()
+	<-cmd.Context().Done()
 	logger.Info("Shutting down")
 
 	return nil

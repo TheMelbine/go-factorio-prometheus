@@ -11,7 +11,7 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "go-factorio-otel",
+	Use: "go-factorio-otel",
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -25,7 +25,7 @@ func Execute() {
 	rootCmd.SetContext(ctx)
 
 	go func() {
-		<- ctx.Done()
+		<-ctx.Done()
 		log.Info("Shutdown received")
 	}()
 
