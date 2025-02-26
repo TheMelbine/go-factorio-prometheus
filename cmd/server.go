@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/daanv2/go-factorio-otel/internal/setup"
 	"github.com/daanv2/go-factorio-otel/pkg/factorio"
+	"github.com/daanv2/go-factorio-otel/pkg/meters"
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
@@ -54,12 +55,12 @@ func init() {
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
 	var (
-		rconPort     = cmd.Flag("rcon-port").Value.String()
-		rconPassword = cmd.Flag("rcon-password").Value.String()
-		rconHost     = cmd.Flag("rcon-host").Value.String()
-		otelCollector = cmd.Flag("otel-collector").Value.String()
+		rconPort        = cmd.Flag("rcon-port").Value.String()
+		rconPassword    = cmd.Flag("rcon-password").Value.String()
+		rconHost        = cmd.Flag("rcon-host").Value.String()
+		otelCollector   = cmd.Flag("otel-collector").Value.String()
 		otelServiceName = cmd.Flag("otel-service-name").Value.String()
-		logger       = log.WithPrefix("server")
+		logger          = log.WithPrefix("server")
 	)
 	if rconPort == "" || rconPassword == "" || rconHost == "" {
 		return errors.New("rcon-port, rcon-password, and rcon-host are required")
@@ -67,7 +68,6 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	if otelCollector == "" || otelServiceName == "" {
 		return errors.New("otel-collector and otel-service-name are required")
 	}
-
 
 	address := fmt.Sprintf("%s:%s", rconHost, rconPort)
 	logger.Info("Connecting to Factorio RCON server", "address", address)
@@ -110,21 +110,16 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	// test
-	go func() {
-		rep, err := conn.Send("/c game.forces[0]")
-		if err != nil {
-			logger.Error("Failed to send command", "error", err)
-		}
-		logger.Info("Received response", "response", rep)
-	}()
+	manager := meters.NewManager(conn)
 
+	meters.PlayerMeters(manager)
+
+	go manager.Start(cmd.Context())
 	<-cmd.Context().Done()
 	logger.Info("Shutting down")
 
 	return errs
 }
-
 
 func newHTTPHandler() http.Handler {
 	// Add HTTP instrumentation for the whole server.

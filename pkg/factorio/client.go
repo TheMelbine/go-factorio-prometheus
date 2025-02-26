@@ -23,7 +23,7 @@ func NewRCONClient(address, password string) (*RCONClient, error) {
 	return &RCONClient{conn, logger}, nil
 }
 
-func (c *RCONClient) Send(cmd string) (string, error) {
+func (c *RCONClient) Execute(cmd string) (string, error) {
 	logger := c.logger.With("reqid", uuid.NewString())
 	logger.Debug("Sending command", "command", cmd)
 
