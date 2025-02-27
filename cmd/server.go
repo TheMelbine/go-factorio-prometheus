@@ -1,19 +1,15 @@
 package cmd
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
-	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/daanv2/go-factorio-otel/internal/setup"
 	"github.com/daanv2/go-factorio-otel/pkg/factorio"
 	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // serverCmd represents the server command
@@ -31,12 +27,6 @@ var serverCmd = &cobra.Command{
 		if cmd.Flag("rcon-host").Value.String() == "" {
 			err = errors.Join(err, errors.New("rcon-host is required"))
 		}
-		if cmd.Flag("otel-collector").Value.String() == "" {
-			err = errors.Join(err, errors.New("otel-collector is required"))
-		}
-		if cmd.Flag("otel-service-name").Value.String() == "" {
-			err = errors.Join(err, errors.New("otel-service-name is required"))
-		}
 
 		return err
 	},
@@ -46,27 +36,20 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 
 	pf := serverCmd.PersistentFlags()
-	pf.String("rcon-port", "25575", "The port to connect to the Factorio RCON server")
+	pf.String("rcon-port", "8090", "The port to connect to the Factorio RCON server")
 	pf.String("rcon-password", "", "The password to connect to the Factorio RCON server")
 	pf.String("rcon-host", "localhost", "The host to connect to the Factorio RCON server")
-	pf.String("otel-collector", "localhost:4317", "The host and port of the OpenTelemetry collector")
-	pf.String("otel-service-name", "factorio-otel", "The service name to use for OpenTelemetry")
 }
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
 	var (
-		rconPort        = cmd.Flag("rcon-port").Value.String()
-		rconPassword    = cmd.Flag("rcon-password").Value.String()
-		rconHost        = cmd.Flag("rcon-host").Value.String()
-		otelCollector   = cmd.Flag("otel-collector").Value.String()
-		otelServiceName = cmd.Flag("otel-service-name").Value.String()
-		logger          = log.WithPrefix("server")
+		rconPort     = cmd.Flag("rcon-port").Value.String()
+		rconPassword = cmd.Flag("rcon-password").Value.String()
+		rconHost     = cmd.Flag("rcon-host").Value.String()
+		logger       = log.WithPrefix("server")
 	)
 	if rconPort == "" || rconPassword == "" || rconHost == "" {
 		return errors.New("rcon-port, rcon-password, and rcon-host are required")
-	}
-	if otelCollector == "" || otelServiceName == "" {
-		return errors.New("otel-collector and otel-service-name are required")
 	}
 
 	address := fmt.Sprintf("%s:%s", rconHost, rconPort)
@@ -76,54 +59,37 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to connect to Factorio RCON server: %w", err)
 	}
 
-	// Set up OpenTelemetry.
-	otelShutdown, err := setup.OTelSDK(cmd.Context(), otelCollector, otelServiceName)
-	if err != nil {
-		return err
-	}
-	var errs error
-	// Handle shutdown properly so nothing leaks.
-	defer func() {
-		errs = errors.Join(errs, otelShutdown(context.Background()))
-	}()
-
-	// Start HTTP server.
-	srv := &http.Server{
-		Addr:         ":8080",
-		BaseContext:  func(_ net.Listener) context.Context { return cmd.Context() },
-		ReadTimeout:  time.Second,
-		WriteTimeout: 10 * time.Second,
-		Handler:      newHTTPHandler(),
-	}
-	go func() {
-		err := srv.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errs = errors.Join(errs, err)
-		}
-	}()
+	manager := meters.NewManager(conn)
+	meters.PlayerMeters(manager)
+	meters.PlanetsMeters(manager)
+	meters.ForcesMeters(manager)
+	meters.ResearchMeters(manager)
+	meters.LogisticsMeters(manager)
 
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			logger.Error("Failed to close connection", "error", err)
-			errs = errors.Join(errs, err)
 		}
 	}()
 
-	manager := meters.NewManager(conn)
-
-	meters.PlayerMeters(manager)
-
 	go manager.Start(cmd.Context())
+
+	// Start the Prometheus server
+	go func() {
+		log.Info("Starting Prometheus server", "address", ":2112")
+		http.Handle("/metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Debug("Serving metrics")
+			promhttp.Handler().ServeHTTP(w, r)
+		}))
+		err := http.ListenAndServe(":2112", nil)
+		if err != nil {
+			logger.Error("Failed to start Prometheus server", "error", err)
+		}
+	}()
+
 	<-cmd.Context().Done()
 	logger.Info("Shutting down")
 
-	return errs
-}
-
-func newHTTPHandler() http.Handler {
-	// Add HTTP instrumentation for the whole server.
-	mux := http.NewServeMux()
-	handler := otelhttp.NewHandler(mux, "/")
-	return handler
+	return nil
 }

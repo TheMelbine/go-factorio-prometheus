@@ -2,62 +2,58 @@ package meters
 
 import (
 	"context"
-	"sync"
 
-	"go.opentelemetry.io/otel/metric"
+	"github.com/charmbracelet/log"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/exp/constraints"
 )
 
-type Scrape[T constraints.Integer | constraints.Float] func(ctx context.Context, executor Executor) ([]Point[T], error)
-
-type Gauge struct {
-	name   string
-	meter  metric.Int64ObservableGauge
-	data   []Point[int64]
-	lock   sync.Mutex
-	scrape Scrape[int64]
+type Gauge[T constraints.Integer | constraints.Float] struct {
+	counter *prometheus.GaugeVec
+	name    string
+	scrape  Scrape[T]
 }
 
-func (g *Gauge) Name() string {
+func (g *Gauge[T]) Name() string {
 	return g.name
 }
 
-func (g *Gauge) Scrape(ctx context.Context, executor Executor) error {
+func (g *Gauge[T]) Scrape(ctx context.Context, executor Executor) error {
+	logger := log.WithPrefix("gauge-" + g.name)
+	logger.Debug("Scraping gauge")
 	data, err := g.scrape(ctx, executor)
+	logger.Debug("Scraped gauge", "error", err, "data", data)
 	if err != nil {
 		return err
 	}
 
-	g.lock.Lock()
-	defer g.lock.Unlock()
-
-	g.data = data
+	for _, p := range data {
+		g.counter.With(p.Labels).Set(float64(p.Amount))
+	}
 	return nil
 }
 
-func (g *Gauge) Observe(ctx context.Context, observer metric.Observer) error {
-	g.lock.Lock()
-	defer g.lock.Unlock()
-
-	for _, point := range g.data {
-		observer.ObserveInt64(g.meter, point.Amount, metric.WithAttributes(point.Labels...))
+func NewGauge[T constraints.Integer | constraints.Float](name, description string, labels []string, scrape Scrape[T]) *Gauge[T] {
+	return &Gauge[T]{
+		name:   name,
+		scrape: scrape,
+		counter: promauto.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name:      name,
+				Help:      description,
+				Namespace: "factorio",
+				Subsystem: "game",
+			},
+			labels,
+		),
 	}
-
-	return nil
 }
 
-func (g *Gauge) Instrument() metric.Observable {
-	return g.meter
+func (m *Manager) NewGaugeInt64(name, description string, labels []string, scrape Scrape[int64]) {
+	m.AddMeter(NewGauge[int64](name, description, labels, scrape))
 }
 
-func (m *Manager) NewGaugeInt64(name, description, unit string, scrape func(ctx context.Context, executor Executor) ([]Point[int64], error)) error {
-	gauge, err := m.meter.Int64ObservableGauge(name,
-		metric.WithDescription(description),
-		metric.WithUnit(unit),
-	)
-	if err != nil {
-		return err
-	}
-
-	return m.AddMeter(&Gauge{meter: gauge})
+func (m *Manager) NewGaugeFloat64(name, description string, labels []string, scrape Scrape[float64]) {
+	m.AddMeter(NewGauge[float64](name, description, labels, scrape))
 }

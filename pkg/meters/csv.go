@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/csv"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
 	"github.com/charmbracelet/log"
 	"github.com/daanv2/go-factorio-otel/pkg/generics"
-	"go.opentelemetry.io/otel/attribute"
+	"github.com/daanv2/go-factorio-otel/pkg/lua"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/constraints"
 )
 
@@ -23,12 +25,17 @@ func CSVScraper[T constraints.Integer | constraints.Float](header string, cmd st
 	}
 
 	parse := CSVToAttributesParser[T](headers)
+	cmd = lua.SingleLine(cmd)
 	return func(ctx context.Context, executor Executor) ([]Point[T], error) {
 		out, err := executor.Execute(cmd)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error executing: %v => %w", cmd, err)
 		}
-		return parse(out)
+		p, err := parse(out)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing: %v => %w", out, err)
+		}
+		return p, nil
 	}
 }
 
@@ -73,10 +80,10 @@ func parsePoint[T constraints.Integer | constraints.Float](header []string, reco
 
 	p := Point[T]{
 		Amount: amount,
-		Labels: make([]attribute.KeyValue, 0, len(labelsKeys)),
+		Labels: prometheus.Labels{},
 	}
 	for i, key := range labelsKeys {
-		p.Labels = append(p.Labels, attribute.String(strings.TrimSpace(key), labelsValues[i]))
+		p.Labels[key] = labelsValues[i]
 	}
 	return p, nil
 }

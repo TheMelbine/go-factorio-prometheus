@@ -48,7 +48,10 @@ func newPropagator() propagation.TextMapPropagator {
 }
 
 func newMeterProvider(ctx context.Context, endpoint string, res *resource.Resource) (*metric.MeterProvider, error) {
-	metricExporter, err := otlpmetrichttp.New(ctx, otlpmetrichttp.WithEndpoint(endpoint))
+	metricExporter, err := otlpmetrichttp.New(ctx,
+		otlpmetrichttp.WithEndpoint(endpoint),
+		otlpmetrichttp.WithInsecure(),
+	)
 	if err != nil {
 		return nil, err
 	}

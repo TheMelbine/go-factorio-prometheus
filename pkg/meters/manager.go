@@ -7,7 +7,11 @@ import (
 	"github.com/charmbracelet/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
+	"golang.org/x/exp/constraints"
 )
+
+
+type Scrape[T constraints.Integer | constraints.Float] func(ctx context.Context, executor Executor) ([]Point[T], error)
 
 type Executor interface {
 	Execute(cmd string) (string, error)
@@ -16,8 +20,6 @@ type Executor interface {
 type CustomMeter interface {
 	Name() string
 	Scrape(ctx context.Context, executor Executor) error
-	Observe(ctx context.Context, observer metric.Observer) error
-	Instrument() metric.Observable
 }
 
 type Manager struct {
@@ -37,10 +39,8 @@ func NewManager(executor Executor) *Manager {
 	}
 }
 
-func (m *Manager) AddMeter(s CustomMeter) error {
+func (m *Manager) AddMeter(s CustomMeter) {
 	m.meters = append(m.meters, s)
-	_, err := m.meter.RegisterCallback(s.Observe, s.Instrument())
-	return err
 }
 
 func (m *Manager) Start(ctx context.Context) {
@@ -71,5 +71,11 @@ func (m *Manager) loop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
+	}
+
+	// Sleep 5 or exit if the context is done.
+	select {
+	case <-time.After(5 * time.Second):
+	case <-ctx.Done():
 	}
 }
