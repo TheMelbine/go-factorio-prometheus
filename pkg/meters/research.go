@@ -3,7 +3,7 @@ package meters
 const research_cmd = `/silent-command
 local lines = {};
 local force = game.forces["player"];
-if force.current_research then
+if (force and force.current_research) then
 	table.insert(lines, string.format("%s,%s", force.research_progress, force.current_research.name))
 end
 rcon.print(table.concat(lines, "\n"))`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/exp/constraints"
@@ -13,10 +14,19 @@ type Gauge[T constraints.Integer | constraints.Float] struct {
 	counter *prometheus.GaugeVec
 	name    string
 	scrape  Scrape[T]
+	cost    cost.Cost
 }
 
 func (g *Gauge[T]) Name() string {
 	return g.name
+}
+
+func (g *Gauge[T]) Cost() cost.Cost {
+	return g.cost
+}
+
+func (g *Gauge[T]) SetCost(c cost.Cost) {
+	g.cost = c
 }
 
 func (g *Gauge[T]) Scrape(ctx context.Context, executor Executor) error {
@@ -48,12 +58,4 @@ func NewGauge[T constraints.Integer | constraints.Float](name, description strin
 			labels,
 		),
 	}
-}
-
-func (m *Manager) NewGaugeInt64(name, description string, labels []string, scrape Scrape[int64]) {
-	m.AddMeter(NewGauge[int64](name, description, labels, scrape))
-}
-
-func (m *Manager) NewGaugeFloat64(name, description string, labels []string, scrape Scrape[float64]) {
-	m.AddMeter(NewGauge[float64](name, description, labels, scrape))
 }

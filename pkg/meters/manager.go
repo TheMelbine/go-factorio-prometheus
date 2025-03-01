@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"golang.org/x/exp/constraints"
 )
-
 
 type Scrape[T constraints.Integer | constraints.Float] func(ctx context.Context, executor Executor) ([]Point[T], error)
 
@@ -20,6 +20,7 @@ type Executor interface {
 type CustomMeter interface {
 	Name() string
 	Scrape(ctx context.Context, executor Executor) error
+	Cost() cost.Cost
 }
 
 type Manager struct {
@@ -66,10 +67,12 @@ func (m *Manager) loop(ctx context.Context) {
 			continue
 		}
 
-		select {
-		case <-ticker.C:
-		case <-ctx.Done():
-			return
+		if s.Cost() != cost.NONE {
+			select {
+			case <-ticker.C:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}
 
@@ -78,4 +81,17 @@ func (m *Manager) loop(ctx context.Context) {
 	case <-time.After(5 * time.Second):
 	case <-ctx.Done():
 	}
+}
+
+
+func (m *Manager) NewGaugeInt64(name, description string, labels []string, scrape Scrape[int64]) (*Gauge[int64]) {
+	g := NewGauge(name, description, labels, scrape)
+	m.AddMeter(g)
+	return g
+}
+
+func (m *Manager) NewGaugeFloat64(name, description string, labels []string, scrape Scrape[float64]) (*Gauge[float64]) {
+	g := NewGauge(name, description, labels, scrape)
+	m.AddMeter(g)
+	return g
 }
