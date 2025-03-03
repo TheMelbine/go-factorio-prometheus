@@ -1,0 +1,34 @@
+FROM debian:bullseye-slim
+
+# Config
+ENV FACTORIO_VERSION=2.0.32
+ENV FACTORIO_SHA1=01jj1xypewfpq99jktx4g15mxd
+ENV FACTORIO_URL=https://dl.factorio.com/releases/${FACTORIO_VERSION}_${FACTORIO_SHA1}/factorio-headless_linux_${FACTORIO_VERSION}.tar.xz?secure=AmmgJCeaopZTl_-0QsZXag,1740248034
+
+# Install necessary packages
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends ca-certificates curl xz-utils procps
+RUN rm -rf /var/lib/apt/lists/*
+
+# Create a directory for Factorio
+RUN mkdir -p /opt/factorio
+
+# Download and extract Factorio
+RUN curl -L ${FACTORIO_URL} -o /tmp/factorio.tar.xz
+RUN tar -xJf /tmp/factorio.tar.xz -C /opt/factorio --strip-components=1
+RUN rm /tmp/factorio.tar.xz
+
+# Set the working directory
+WORKDIR /opt/factorio
+
+# Expose the default Factorio server port and RCON port
+EXPOSE 34197/udp
+EXPOSE 8090/tcp
+
+# Copy the startup script into the container
+COPY start.sh /opt/factorio/start.sh
+
+RUN chmod +x /opt/factorio/start.sh
+
+# Set the entrypoint to the startup script
+ENTRYPOINT ["/opt/factorio/start.sh"]
