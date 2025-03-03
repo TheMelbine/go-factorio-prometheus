@@ -112,11 +112,9 @@ func (t Table) FilterColumns(headers []string) (Table, error) {
 	for j, h := range t.Headers {
 		translate[j] = result.HeaderIndex(h)
 	}
-	
 
 	for _, record := range t.Records {
 		nrecord := Record{Values:make([]string, len(record.Values))}
-		result.Records = append(result.Records, nrecord)
 
 		// Move values
 		for i, v := range record.Values {
@@ -126,7 +124,9 @@ func (t Table) FilterColumns(headers []string) (Table, error) {
 			}
 			nrecord.Values[nindex] = v
 		}
-		
+
+		nrecord.Values = nrecord.Values[:len(headers)]
+		result.Records = append(result.Records, nrecord)
 	}
 
 	return result, nil
