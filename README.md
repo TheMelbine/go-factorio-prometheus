@@ -8,3 +8,7 @@ For a grafana / prometheus setup, see /examples for files
 ```
 go run main.go server --rcon-password bananaphone123
 ```
+
+## Example metrics:
+
+![metrics](./doc/assets/metrics.png)
