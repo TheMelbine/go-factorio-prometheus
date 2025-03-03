@@ -1,28 +1,19 @@
-package meters
+package data
 
-import "github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+import (
+	_ "embed"
+
+	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+)
 
 // https://lua-api.factorio.com/latest/classes/LuaForce.html
-const logistics_robots_cmd = `/silent-command
-local lines = {};
-local force = game.forces["player"];
-if force then
-	for _, networks in pairs(force.logistic_networks) do
-		for _, network in ipairs(networks) do
-			table.insert(lines, string.format("%s,%s,%s,%s,%s",
-				network.available_logistic_robots,
-				network.all_logistic_robots,
-				network.available_construction_robots,
-				network.all_construction_robots,
-				network.network_id
-			));
-		end
-	end
-end
-rcon.print(table.concat(lines, "\n"))`
 
-func LogisticsMeters(manager *Manager) {
-	logistics_robots_table := NewCSVTable(
+//go:embed scripts/logistics/robots.lua
+var logistics_robots_cmd string
+
+func LogisticsMeters(manager *meters.Manager) {
+	logistics_robots_table := meters.NewCSVTable(
 		"logistics_robots_table",
 		logistics_robots_cmd,
 		[]string{"available_logistic_robots", "all_logistic_robots", "available_construction_robots", "all_construction_robots", "network_id"},

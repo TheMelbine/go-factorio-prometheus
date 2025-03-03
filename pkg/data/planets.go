@@ -1,16 +1,17 @@
-package meters
+package data
 
-import "github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+import (
+	_ "embed"
 
-const planets_table_cmd = `/silent-command
-local lines = {};
-for _, surface in pairs(game.surfaces) do
-  table.insert(lines, string.format("%s,%s,%s,%s,%s", surface.name, surface.get_total_pollution(), surface.daytime, surface.darkness, surface.wind_speed));
-end
-rcon.print(table.concat(lines, "\n"))`
+	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+)
 
-func PlanetsMeters(manager *Manager) {
-	planet_table := NewCSVTable(
+//go:embed scripts/planets/basic.lua
+var planets_table_cmd string
+
+func PlanetsMeters(manager *meters.Manager) {
+	planet_table := meters.NewCSVTable(
 		"planets_table",
 		planets_table_cmd,
 		[]string{"planet", "total_pollution", "daytime", "darkness", "wind_speed"},

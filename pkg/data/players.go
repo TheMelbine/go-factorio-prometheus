@@ -1,26 +1,19 @@
-package meters
+package data
 
-import "github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+import (
+	_ "embed"
 
-const player_joined_cmd = `/silent-command
-local lines = {};
-for _, player in pairs(game.players) do
-    table.insert(lines, string.format("1,%s,%s,%s,%s,%s,%s",
-        player.name,
-        player.surface.name,
-        player.connected,
-        player.afk_time,
-        player.online_time,
-        player.character_running_speed,
-        player.in_combat
-    ));
-end
-rcon.print(table.concat(lines, "\n"))`
+	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+)
 
-func PlayerMeters(manager *Manager) {
-	players_table := NewCSVTable(
+//go:embed scripts/players/basic.lua
+var player_basic_cmd string
+
+func PlayerMeters(manager *meters.Manager) {
+	players_table := meters.NewCSVTable(
 		"players_table",
-		player_joined_cmd,
+		player_basic_cmd,
 		[]string{"amount", "name", "planet", "connected", "afk_time", "online_time", "character_running_speed", "in_combat"},
 	)
 	manager.AddMeter(players_table)

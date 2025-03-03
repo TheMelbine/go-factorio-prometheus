@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/charmbracelet/log"
+	"github.com/daanv2/go-factorio-otel/pkg/data"
 	"github.com/daanv2/go-factorio-otel/pkg/factorio"
 	"github.com/daanv2/go-factorio-otel/pkg/meters"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +40,7 @@ func init() {
 	pf.String("rcon-port", "8090", "The port to connect to the Factorio RCON server")
 	pf.String("rcon-password", "", "The password to connect to the Factorio RCON server")
 	pf.String("rcon-host", "localhost", "The host to connect to the Factorio RCON server")
+	pf.String("prometheus-address", ":2112", "The address for prometheus to reach this instance")
 }
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
@@ -46,10 +48,14 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 		rconPort     = cmd.Flag("rcon-port").Value.String()
 		rconPassword = cmd.Flag("rcon-password").Value.String()
 		rconHost     = cmd.Flag("rcon-host").Value.String()
+		promaddress  = cmd.Flag("prometheus-address").Value.String()
 		logger       = log.WithPrefix("server")
 	)
 	if rconPort == "" || rconPassword == "" || rconHost == "" {
 		return errors.New("rcon-port, rcon-password, and rcon-host are required")
+	}
+	if promaddress == "" {
+		return errors.New("prometheus-address cannot be empty")
 	}
 
 	address := fmt.Sprintf("%s:%s", rconHost, rconPort)
@@ -60,25 +66,25 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	}
 
 	manager := meters.NewManager(conn)
-	meters.Setup(manager)
+	data.Setup(manager)
 
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			logger.Error("Failed to close connection", "error", err)
-		} 
+		}
 	}()
 
 	go manager.Start(cmd.Context())
 
 	// Start the Prometheus server
 	go func() {
-		log.Info("Starting Prometheus server", "address", ":2112")
+		log.Info("Starting Prometheus server", "address", promaddress + "/metrics")
 		http.Handle("/metrics", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log.Debug("Serving metrics")
 			promhttp.Handler().ServeHTTP(w, r)
 		}))
-		err := http.ListenAndServe(":2112", nil)
+		err := http.ListenAndServe(promaddress, nil)
 		if err != nil {
 			logger.Error("Failed to start Prometheus server", "error", err)
 		}

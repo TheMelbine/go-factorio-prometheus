@@ -1,19 +1,19 @@
-package meters
+package data
 
-import "github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+import (
+	_ "embed"
 
-const force_cmd = `/silent-command
-local lines = {};
-local force = game.forces["player"];
-if force then
-	table.insert(lines, string.format("1,%s,%s,%s", force.name, force.research_progress, force.current_research.name, force.rockets_launched));
-end
-rcon.print(table.concat(lines, "\n"))`
+	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+)
 
-func ForcesMeters(manager *Manager) {
-	force_table := NewCSVTable(
+//go:embed scripts/forces/basic.lua
+var force_basic_cmd string
+
+func ForcesMeters(manager *meters.Manager) {
+	force_table := meters.NewCSVTable(
 		"force_table",
-		force_cmd,
+		force_basic_cmd,
 		[]string{"amount", "name", "research_progress", "current_research", "rockets_launched"},
 	)
 	manager.AddMeter(force_table)
