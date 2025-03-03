@@ -1,0 +1,53 @@
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+  factorio:
+    image: factorio-server:latest
+    container_name: factorio
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "34197:34197/udp"
+      - "8090:8090/tcp"
+    volumes:
+      - ./data/factorio:/opt/factorio/config
+      - ./saves:/opt/factorio/saves
+      - ./server-adminlist.json:/opt/factorio/server-adminlist.json
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'  # Limit to 2 CPU cores
+        reservations:
+          cpus: '1.0'  # Reserve 1 CPU core
+
+networks:
+  monitoring:
+    driver: bridge
