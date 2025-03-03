@@ -54,14 +54,23 @@ func CSVTableToPoints[T constraints.Integer | constraints.Float](table csvx.Tabl
 }
 
 func parsePoint[T constraints.Integer | constraints.Float](header []string, record []string) (Point[T], error) {
-	amount, err := generics.ParseNumber[T](record[0])
-	if err != nil {
-		return Point[T]{}, err
+	v := record[0]
+	var (
+		amount T
+		err    error
+	)
+
+	if v != "" {
+		amount, err = generics.ParseNumber[T](v)
+		if err != nil {
+			return Point[T]{}, err
+		}
 	}
 
 	labelsValues := record[1:]
 	labelsKeys := header[1:]
 	if len(labelsKeys) != len(labelsValues) {
+		log.Debug("header and record have different lengths", "values", labelsValues, "keys", labelsKeys)
 		return Point[T]{}, errors.New("header and record have different lengths")
 	}
 

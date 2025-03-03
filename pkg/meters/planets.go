@@ -1,49 +1,44 @@
 package meters
 
-func surfaceProperty(property string) string {
-	return `/silent-command
+import "github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+
+const planets_table_cmd = `/silent-command
 local lines = {};
 for _, surface in pairs(game.surfaces) do
-  table.insert(lines, string.format("%s,%s", surface.` + property + `, surface.name))
+  table.insert(lines, string.format("%s,%s,%s,%s,%s", surface.name, surface.get_total_pollution(), surface.daytime, surface.darkness, surface.wind_speed));
 end
 rcon.print(table.concat(lines, "\n"))`
-}
 
 func PlanetsMeters(manager *Manager) {
+	planet_table := NewCSVTable(
+		"planets_table",
+		planets_table_cmd,
+		[]string{"planet", "total_pollution", "daytime", "darkness", "wind_speed"},
+	)
+	manager.AddMeter(planet_table)
+
 	manager.NewGaugeFloat64(
 		"planet_pollution_total",
 		"The total pollution on the planet",
 		[]string{"planet"},
-		CSVScraper[float64](
-			"amount,planet",
-			surfaceProperty("get_total_pollution()"),
-		),
-	)
+		planet_table.SubTableFloat64("total_pollution", "planet"),
+	).SetCost(cost.NONE)
 	manager.NewGaugeFloat64(
 		"planet_daytime",
 		"Current time of day, as a number in range [0, 1).",
 		[]string{"planet"},
-		CSVScraper[float64](
-			"amount,planet",
-			surfaceProperty("daytime"),
-		),
-	)
+		planet_table.SubTableFloat64("daytime", "planet"),
+	).SetCost(cost.NONE)
 	manager.NewGaugeFloat64(
 		"planet_darkness",
 		"Amount of darkness at the current time, as a number in range [0, 1].",
 		[]string{"planet"},
-		CSVScraper[float64](
-			"amount,planet",
-			surfaceProperty("darkness"),
-		),
-	)
+		planet_table.SubTableFloat64("darkness", "planet"),
+	).SetCost(cost.NONE)
 	manager.NewGaugeFloat64(
 		"planet_wind_speed",
-		"Current wind speed in tiles per tick.",
+		"Amount of darkness at the current time, as a number in range [0, 1].",
 		[]string{"planet"},
-		CSVScraper[float64](
-			"amount,planet",
-			surfaceProperty("wind_speed"),
-		),
-	)
+		planet_table.SubTableFloat64("wind_speed", "planet"),
+	).SetCost(cost.NONE)
 }

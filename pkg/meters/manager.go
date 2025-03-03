@@ -63,7 +63,7 @@ func (m *Manager) loop(ctx context.Context) {
 	for _, s := range m.meters {
 		err := s.Scrape(ctx, m.executor)
 		if err != nil {
-			log.Error("failed to scrape", "error", err, "meter", s.Name())
+			log.WithPrefix(s.Name()).Error("failed to scrape", "error", err)
 			continue
 		}
 

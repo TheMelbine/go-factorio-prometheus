@@ -3,7 +3,6 @@ package meters
 import (
 	"context"
 
-	"github.com/charmbracelet/log"
 	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -30,10 +29,7 @@ func (g *Gauge[T]) SetCost(c cost.Cost) {
 }
 
 func (g *Gauge[T]) Scrape(ctx context.Context, executor Executor) error {
-	logger := log.WithPrefix("gauge-" + g.name)
-	logger.Debug("Scraping gauge")
 	data, err := g.scrape(ctx, executor)
-	logger.Debug("Scraped gauge", "error", err, "data", data)
 	if err != nil {
 		return err
 	}

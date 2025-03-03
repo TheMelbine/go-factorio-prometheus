@@ -60,17 +60,13 @@ func serverWorkload(cmd *cobra.Command, args []string) error {
 	}
 
 	manager := meters.NewManager(conn)
-	meters.PlayerMeters(manager)
-	meters.PlanetsMeters(manager)
-	meters.ForcesMeters(manager)
-	meters.ResearchMeters(manager)
-	meters.LogisticsMeters(manager)
+	meters.Setup(manager)
 
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			logger.Error("Failed to close connection", "error", err)
-		}
+		} 
 	}()
 
 	go manager.Start(cmd.Context())

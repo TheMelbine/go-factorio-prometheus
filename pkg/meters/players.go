@@ -8,12 +8,12 @@ for _, player in pairs(game.players) do
     table.insert(lines, string.format("1,%s,%s,%s,%s,%s,%s",
         player.name,
         player.surface.name,
-        tostring(player.connected),
+        player.connected,
         player.afk_time,
         player.online_time,
         player.character_running_speed,
-        player.in_combat,
-    ))
+        player.in_combat
+    ));
 end
 rcon.print(table.concat(lines, "\n"))`
 
@@ -43,10 +43,10 @@ func PlayerMeters(manager *Manager) {
 		[]string{"name", "planet", "connected", "in_combat"},
 		players_table.SubTableInt64("online_time", "name", "planet", "connected", "in_combat"),
 	).SetCost(cost.NONE)
-	manager.NewGaugeInt64(
+	manager.NewGaugeFloat64(
 		"players_running_speed",
 		"The current movement speed of this character, including effects from exoskeletons, tiles, stickers and shooting.",
 		[]string{"name", "planet", "connected", "in_combat"},
-		players_table.SubTableInt64("character_running_speed", "name", "planet", "connected", "in_combat"),
+		players_table.SubTableFloat64("character_running_speed", "name", "planet", "connected", "in_combat"),
 	).SetCost(cost.NONE)
 }

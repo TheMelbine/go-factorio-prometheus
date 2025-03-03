@@ -1,10 +1,40 @@
 package factorio
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 	"github.com/gorcon/rcon"
 )
+
+var _ error = CommandError{}
+
+type CommandError struct {
+	CMD string
+	ErrorMsg string
+}
+
+func (e CommandError) Error() string {
+	return "error by cmd: " + e.ErrorMsg + "\ncmd: " + e.CMD
+}
+
+func NewCommandError(cmd, resp string) CommandError {
+	index := strings.Index(resp, "Error: ")
+	if index > -1 {
+		msg := strings.TrimSpace(resp[index + 6:])
+		return CommandError{
+			CMD: cmd,
+			ErrorMsg: msg,
+		}
+	}
+
+	return CommandError{
+		CMD: cmd,
+		ErrorMsg: resp,
+	}
+}
+
 
 type RCONClient struct {
 	conn   *rcon.Conn
@@ -32,6 +62,13 @@ func (c *RCONClient) Execute(cmd string) (string, error) {
 		logger.Error("Failed to execute command", "error", err)
 		return "", err
 	}
+	if strings.Contains(resp, "Cannot execute command. Error: ") {
+		return "", CommandError{
+			CMD: cmd,
+			ErrorMsg: resp,
+		}
+	}
+
 	logger.Debug("Received response", "response", resp)
 
 	return resp, nil
