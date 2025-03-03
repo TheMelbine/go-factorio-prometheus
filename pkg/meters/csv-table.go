@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/daanv2/go-factorio-otel/pkg/csv"
+	"github.com/daanv2/go-factorio-otel/pkg/lua"
 	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
 )
 
@@ -28,6 +29,7 @@ func (t *CSVTable) Cost() cost.Cost {
 }
 
 func NewCSVTable(name, cmd string, headers []string) *CSVTable {
+	cmd = lua.SingleLine(cmd)
 	return &CSVTable{
 		name:    name,
 		cmd:     cmd,
@@ -60,13 +62,13 @@ func (t *CSVTable) SubTableInt64(headers ...string) Scrape[int64] {
 	}
 }
 
-func (t *CSVTable) SubTableFloat64(headers ...string) Scrape[int64] {
-	return func(ctx context.Context, executor Executor) ([]Point[int64], error) {
+func (t *CSVTable) SubTableFloat64(headers ...string) Scrape[float64] {
+	return func(ctx context.Context, executor Executor) ([]Point[float64], error) {
 		data, err := t.table.FilterColumns(headers)
 		if err != nil {
 			return nil, err
 		}
 
-		return CSVTableToPoints[int64](data), nil
+		return CSVTableToPoints[float64](data), nil
 	}
 }
