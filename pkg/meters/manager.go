@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters/cost"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"golang.org/x/exp/constraints"
@@ -41,6 +41,7 @@ func NewManager(executor Executor) *Manager {
 }
 
 func (m *Manager) AddMeter(s CustomMeter) {
+	log.WithPrefix("meters").Debug("adding meter", "name", s.Name(), "cost", s.Cost())
 	m.meters = append(m.meters, s)
 }
 
@@ -53,6 +54,17 @@ func (m *Manager) Start(ctx context.Context) {
 			m.loop(ctx)
 		}
 	}
+}
+
+func (m *Manager) LoopOnce(ctx context.Context) error {
+	for _, s := range m.meters {
+		err := s.Scrape(ctx, m.executor)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m *Manager) loop(ctx context.Context) {
