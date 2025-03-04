@@ -45,11 +45,11 @@ func TrainMeters(manager *meters.Manager) {
 		[]string{"has_path", "id", "state"},
 		trains_table.SubTableInt64("item_count", "has_path", "id", "state"),
 	).SetCost(cost.NONE)
-	manager.NewGaugeInt64(
+	manager.NewGaugeFloat64(
 		"trains_fluid_count",
 		"The amount of a particular fluid stored in the train.",
 		[]string{"has_path", "id", "state"},
-		trains_table.SubTableInt64("fluid_count", "has_path", "id", "state"),
+		trains_table.SubTableFloat64("fluid_count", "has_path", "id", "state"),
 	).SetCost(cost.NONE)
 	manager.NewGaugeInt64(
 		"trains_kill_count",
