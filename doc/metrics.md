@@ -14,10 +14,18 @@ This document lists all metrics exposed by the application.
 | factorio_game_planet_daytime | Current time of day, as a number in range [0, 1). | GAUGE |
 | factorio_game_planet_pollution_total | The total pollution on the planet | GAUGE |
 | factorio_game_planet_wind_speed | Amount of darkness at the current time, as a number in range [0, 1]. | GAUGE |
+| factorio_game_platforms_speed | Current speed | GAUGE |
+| factorio_game_platforms_weight | The weight of platforms | GAUGE |
 | factorio_game_players_afk_time | The amount of time the players is afk | GAUGE |
 | factorio_game_players_connected | The state of players connected | GAUGE |
 | factorio_game_players_online_time | The state of players connected | GAUGE |
 | factorio_game_players_running_speed | The current movement speed of this character, including effects from exoskeletons, tiles, stickers and shooting. | GAUGE |
+| factorio_game_production_electric_intput | The electric network statistics for this electric pole. [joules] | GAUGE |
+| factorio_game_production_electric_output | The electric network statistics for this electric pole. [joules] | GAUGE |
+| factorio_game_production_electric_storage | The electric network statistics for this electric pole. [joules] | GAUGE |
+| factorio_game_production_entity_build_input | The entity build statistics for this force (built and mined) for the given surface. | GAUGE |
+| factorio_game_production_entity_build_output | The entity build statistics for this force (built and mined) for the given surface. | GAUGE |
+| factorio_game_production_entity_build_storage | The entity build statistics for this force (built and mined) for the given surface. | GAUGE |
 | factorio_game_production_fluids_input | Amount of fluids being inputted | GAUGE |
 | factorio_game_production_fluids_output | Amount of fluids being outputted | GAUGE |
 | factorio_game_production_fluids_storage | Amount of fluids in storage | GAUGE |
@@ -70,5 +78,4 @@ This document lists all metrics exposed by the application.
 | process_resident_memory_bytes | Resident memory size in bytes. | GAUGE |
 | process_start_time_seconds | Start time of the process since unix epoch in seconds. | GAUGE |
 | process_virtual_memory_bytes | Virtual memory size in bytes. | GAUGE |
-| process_virtual_memory_max_bytes | Maximum amount of virtual memory available in bytes. | GAUGE |
 
