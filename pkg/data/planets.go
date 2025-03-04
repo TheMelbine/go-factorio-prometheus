@@ -3,8 +3,8 @@ package data
 import (
 	_ "embed"
 
-	"github.com/daanv2/go-factorio-otel/pkg/meters"
-	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters/cost"
 )
 
 //go:embed scripts/planets/basic.lua

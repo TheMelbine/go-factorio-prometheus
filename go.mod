@@ -1,4 +1,4 @@
-module github.com/daanv2/go-factorio-otel
+module github.com/daanv2/go-factorio-prometheus
 
 go 1.24.0
 

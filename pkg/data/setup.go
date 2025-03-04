@@ -1,6 +1,6 @@
 package data
 
-import "github.com/daanv2/go-factorio-otel/pkg/meters"
+import "github.com/daanv2/go-factorio-prometheus/pkg/meters"
 
 func Setup(manager *meters.Manager) {
 	PlayerMeters(manager)

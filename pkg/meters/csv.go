@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/log"
-	csvx "github.com/daanv2/go-factorio-otel/pkg/csv"
-	"github.com/daanv2/go-factorio-otel/pkg/generics"
-	"github.com/daanv2/go-factorio-otel/pkg/lua"
+	csvx "github.com/daanv2/go-factorio-prometheus/pkg/csv"
+	"github.com/daanv2/go-factorio-prometheus/pkg/generics"
+	"github.com/daanv2/go-factorio-prometheus/pkg/lua"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/constraints"
 )

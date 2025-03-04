@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/charmbracelet/log"
-	"github.com/daanv2/go-factorio-otel/cmd"
-	"github.com/daanv2/go-factorio-otel/internal/setup"
+	"github.com/daanv2/go-factorio-prometheus/cmd"
+	"github.com/daanv2/go-factorio-prometheus/internal/setup"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/charmbracelet/log"
-	"github.com/daanv2/go-factorio-otel/pkg/csv"
-	"github.com/daanv2/go-factorio-otel/pkg/lua"
-	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+	"github.com/daanv2/go-factorio-prometheus/pkg/csv"
+	"github.com/daanv2/go-factorio-prometheus/pkg/lua"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters/cost"
 )
 
 type CSVTable struct {

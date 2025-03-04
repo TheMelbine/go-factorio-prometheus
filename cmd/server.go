@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/charmbracelet/log"
-	"github.com/daanv2/go-factorio-otel/pkg/data"
-	"github.com/daanv2/go-factorio-otel/pkg/factorio"
-	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-prometheus/pkg/data"
+	"github.com/daanv2/go-factorio-prometheus/pkg/factorio"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 )

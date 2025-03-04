@@ -3,7 +3,7 @@ package meters
 import (
 	"context"
 
-	"github.com/daanv2/go-factorio-otel/pkg/meters/cost"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters/cost"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/exp/constraints"

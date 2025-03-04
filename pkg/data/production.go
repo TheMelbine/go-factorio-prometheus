@@ -3,7 +3,7 @@ package data
 import (
 	_ "embed"
 
-	"github.com/daanv2/go-factorio-otel/pkg/meters"
+	"github.com/daanv2/go-factorio-prometheus/pkg/meters"
 )
 
 var (
