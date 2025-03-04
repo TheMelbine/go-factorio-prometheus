@@ -34,6 +34,20 @@ var (
 	pollution_output_cmd string
 	//go:embed scripts/production/pollution-storage.lua
 	pollution_storage_cmd string
+
+	//go:embed scripts/production/build-input.lua
+	entity_build_input_cmd string
+	//go:embed scripts/production/build-output.lua
+	entity_build_output_cmd string
+	//go:embed scripts/production/build-storage.lua
+	entity_build_storage_cmd string
+
+	//go:embed scripts/production/electric-input.lua
+	electric_input_cmd string
+	//go:embed scripts/production/electric-output.lua
+	electric_output_cmd string
+	//go:embed scripts/production/electric-storage.lua
+	electric_storage_cmd string
 )
 
 func ProductionMeters(manager *meters.Manager) {
@@ -154,6 +168,66 @@ func ProductionMeters(manager *meters.Manager) {
 			meters.CSVScraper[float64](
 				"amount,name,planet",
 				pollution_storage_cmd,
+			),
+		)
+	}
+	// Entity build
+	{
+		manager.NewGaugeFloat64(
+			"production_entity_build_input",
+			"The entity build statistics for this force (built and mined) for the given surface.",
+			[]string{"name", "planet", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,force",
+				entity_build_input_cmd,
+			),
+		)
+		manager.NewGaugeFloat64(
+			"production_entity_build_output",
+			"The entity build statistics for this force (built and mined) for the given surface.",
+			[]string{"name", "planet", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,force",
+				entity_build_output_cmd,
+			),
+		)
+		manager.NewGaugeFloat64(
+			"production_entity_build_storage",
+			"The entity build statistics for this force (built and mined) for the given surface.",
+			[]string{"name", "planet", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,force",
+				entity_build_storage_cmd,
+			),
+		)
+	}
+	// Electric build
+	{
+		manager.NewGaugeFloat64(
+			"production_electric_intput",
+			"The electric network statistics for this electric pole. [joules]",
+			[]string{"name", "planet", "network", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,network,force",
+				electric_input_cmd,
+			),
+		)
+		manager.NewGaugeFloat64(
+			"production_electric_output",
+			"The electric network statistics for this electric pole. [joules]",
+			[]string{"name", "planet", "network", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,network,force",
+				electric_output_cmd,
+			),
+		)
+		manager.NewGaugeFloat64(
+			"production_electric_storage",
+			"The electric network statistics for this electric pole. [joules]",
+			[]string{"name", "planet", "network", "force"},
+			meters.CSVScraper[float64](
+				"amount,name,planet,network,force",
+				electric_storage_cmd,
 			),
 		)
 	}

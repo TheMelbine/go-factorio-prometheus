@@ -8,5 +8,6 @@ func Setup(manager *meters.Manager) {
 	ForcesMeters(manager)
 	LogisticsMeters(manager)
 	TrainMeters(manager)
+	PlatformMeters(manager)
 	ProductionMeters(manager)
 }
