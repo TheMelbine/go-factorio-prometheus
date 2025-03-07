@@ -107,3 +107,16 @@ func (m *Manager) NewGaugeFloat64(name, description string, labels []string, scr
 	m.AddMeter(g)
 	return g
 }
+
+
+func (m *Manager) NewCounterInt64(name, description string, labels []string, scrape Scrape[int64]) (*Counter[int64]) {
+	g := NewCounter(name, description, labels, scrape)
+	m.AddMeter(g)
+	return g
+}
+
+func (m *Manager) NewCounterFloat64(name, description string, labels []string, scrape Scrape[float64]) (*Counter[float64]) {
+	g := NewCounter(name, description, labels, scrape)
+	m.AddMeter(g)
+	return g
+}
