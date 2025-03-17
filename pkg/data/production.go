@@ -203,7 +203,7 @@ func ProductionMeters(manager *meters.Manager) {
 	}
 	// Electric build
 	{
-		manager.NewCounterFloat64(
+		manager.NewGaugeFloat64(
 			"production_electric_intput",
 			"The electric network statistics for this electric pole. [joules]",
 			[]string{"name", "planet", "network", "force"},
@@ -212,7 +212,7 @@ func ProductionMeters(manager *meters.Manager) {
 				electric_input_cmd,
 			),
 		)
-		manager.NewCounterFloat64(
+		manager.NewGaugeFloat64(
 			"production_electric_output",
 			"The electric network statistics for this electric pole. [joules]",
 			[]string{"name", "planet", "network", "force"},
@@ -221,7 +221,7 @@ func ProductionMeters(manager *meters.Manager) {
 				electric_output_cmd,
 			),
 		)
-		manager.NewCounterFloat64(
+		manager.NewGaugeFloat64(
 			"production_electric_storage",
 			"The electric network statistics for this electric pole. [joules]",
 			[]string{"name", "planet", "network", "force"},
