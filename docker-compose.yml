@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  factorio-prometheus:
+    image: ghcr.io/${GITHUB_USERNAME}/go-factorio-prometheus:latest
+    command: ${COMMAND:-server}
+    environment:
+      - RCON_HOST=${RCON_HOST:-localhost}
+      - RCON_PORT=${RCON_PORT:-8090}
+      - RCON_PASSWORD=${RCON_PASSWORD}
+      - PROMETHEUS_ADDRESS=${PROMETHEUS_ADDRESS:-:2112}
+    ports:
+      - "${PROMETHEUS_PORT:-2112}:2112"
+    restart: unless-stopped
+    volumes:
+      - ./doc:/app/doc

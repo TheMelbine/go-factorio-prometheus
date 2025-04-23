@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/charmbracelet/log"
 	"github.com/daanv2/go-factorio-prometheus/pkg/data"
@@ -37,10 +38,10 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 
 	pf := serverCmd.PersistentFlags()
-	pf.String("rcon-port", "8090", "The port to connect to the Factorio RCON server")
-	pf.String("rcon-password", "", "The password to connect to the Factorio RCON server")
-	pf.String("rcon-host", "localhost", "The host to connect to the Factorio RCON server")
-	pf.String("prometheus-address", ":2112", "The address for prometheus to reach this instance")
+	pf.String("rcon-port", os.Getenv("RCON_PORT"), "The port to connect to the Factorio RCON server")
+	pf.String("rcon-password", os.Getenv("RCON_PASSWORD"), "The password to connect to the Factorio RCON server")
+	pf.String("rcon-host", os.Getenv("RCON_HOST"), "The host to connect to the Factorio RCON server")
+	pf.String("prometheus-address", os.Getenv("PROMETHEUS_ADDRESS"), "The address for prometheus to reach this instance")
 }
 
 func serverWorkload(cmd *cobra.Command, args []string) error {
