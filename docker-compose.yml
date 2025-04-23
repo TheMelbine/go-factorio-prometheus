@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   factorio-prometheus:
     image: ghcr.io/${GITHUB_USERNAME}/go-factorio-prometheus:latest
